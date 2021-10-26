@@ -19,6 +19,7 @@ import tourGuide.dto.NearByAttractionDto;
 import tourGuide.helper.InternalTestHelper;
 import tourGuide.tracker.Tracker;
 import tourGuide.user.User;
+import tourGuide.user.UserPreferences;
 import tourGuide.user.UserReward;
 import tripPricer.Provider;
 import tripPricer.TripPricer;
@@ -113,6 +114,11 @@ public class TourGuideService {
 		return distances.subList(0, Math.min(maxToGrab, distances.size()));
 	}
 
+	public User setUserPreferences(String userName, UserPreferences userPreferences) {
+		User user = getUser(userName);
+		user.setUserPreferences(userPreferences);
+		return user;
+	}
 
 	private void addShutDownHook() {
 		Runtime.getRuntime().addShutdownHook(new Thread() { 

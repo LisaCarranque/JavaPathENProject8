@@ -5,10 +5,7 @@ import java.util.List;
 import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.jsoniter.output.JsonStream;
 
@@ -16,6 +13,7 @@ import gpsUtil.location.VisitedLocation;
 import tourGuide.dto.NearByAttractionDto;
 import tourGuide.service.TourGuideService;
 import tourGuide.user.User;
+import tourGuide.user.UserPreferences;
 import tripPricer.Provider;
 
 @RestController
@@ -70,7 +68,16 @@ public class TourGuideController {
     	List<Provider> providers = tourGuideService.getTripDeals(getUser(userName));
     	return JsonStream.serialize(providers);
     }
-    
+
+    /**
+     * Endpoint UserPrefences : this endpoint allows setting new UserPreferences to the targeted User
+     */
+    @RequestMapping("/setUserPreferences/{userName}")
+    private String setUserPreferences(@RequestBody UserPreferences userPreferences, @PathVariable String userName) {
+        User user = tourGuideService.setUserPreferences(userName, userPreferences);
+        return JsonStream.serialize(user);
+    }
+
     private User getUser(String userName) {
     	return tourGuideService.getUser(userName);
     }
