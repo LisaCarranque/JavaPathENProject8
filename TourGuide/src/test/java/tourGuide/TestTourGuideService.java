@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import org.javamoney.moneta.Money;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -20,7 +21,11 @@ import tourGuide.helper.InternalTestHelper;
 import tourGuide.service.RewardsService;
 import tourGuide.service.TourGuideService;
 import tourGuide.user.User;
+import tourGuide.user.UserPreferences;
 import tripPricer.Provider;
+
+import javax.money.CurrencyUnit;
+import javax.money.Monetary;
 
 public class TestTourGuideService {
 
@@ -132,6 +137,35 @@ public class TestTourGuideService {
 		
 		assertEquals(10, providers.size());
 	}
-	
-	
+
+	@Test
+	public void setUserPreferences() {
+		GpsUtil gpsUtil = new GpsUtil();
+		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
+
+		InternalTestHelper.setInternalUserNumber(1);
+		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
+
+		CurrencyUnit currency = Monetary.getCurrency("USD");
+		User user = tourGuideService.getAllUsers().get(0);
+		UserPreferences userPreferences = new UserPreferences();
+		userPreferences.setAttractionProximity(1);
+		userPreferences.setNumberOfAdults(1);
+		userPreferences.setNumberOfChildren(1);
+		userPreferences.setTicketQuantity(1);
+		userPreferences.setTripDuration(1);
+		userPreferences.setHighPricePoint(Money.of(1, currency));
+		userPreferences.setLowerPricePoint(Money.of(0, currency));
+		tourGuideService.setUserPreferences(user.getUserName(),userPreferences);
+
+		tourGuideService.tracker.stopTracking();
+		assertEquals(user.getUserPreferences().getNumberOfAdults(), 1);
+		assertEquals(user.getUserPreferences().getNumberOfChildren(), 1);
+		assertEquals(user.getUserPreferences().getAttractionProximity(), 1);
+		assertEquals(user.getUserPreferences().getTicketQuantity(), 1);
+		assertEquals(user.getUserPreferences().getTripDuration(), 1);
+		assertEquals(user.getUserPreferences().getHighPricePoint(), Money.of(1, currency));
+		assertEquals(user.getUserPreferences().getLowerPricePoint(), Money.of(0, currency));
+	}
+
 }
