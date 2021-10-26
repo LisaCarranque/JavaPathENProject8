@@ -3,10 +3,12 @@ package tourGuide;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import gpsUtil.location.Location;
 import org.javamoney.moneta.Money;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -166,6 +168,20 @@ public class TestTourGuideService {
 		assertEquals(user.getUserPreferences().getTripDuration(), 1);
 		assertEquals(user.getUserPreferences().getHighPricePoint(), Money.of(1, currency));
 		assertEquals(user.getUserPreferences().getLowerPricePoint(), Money.of(0, currency));
+	}
+
+	@Test
+	public void getAllCurrentLocations() {
+		GpsUtil gpsUtil = new GpsUtil();
+		RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
+
+		InternalTestHelper.setInternalUserNumber(100);
+		TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
+
+		HashMap<String, Location> visitedLocations = tourGuideService.getAllCurrentLocations();
+
+		tourGuideService.tracker.stopTracking();
+		assertTrue(visitedLocations.size() == 100);
 	}
 
 }

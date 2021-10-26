@@ -120,6 +120,17 @@ public class TourGuideService {
 		return user;
 	}
 
+	public HashMap<String, Location> getAllCurrentLocations() {
+		HashMap<String, Location> visitedLocations = new HashMap<>();
+		List<User> users = getAllUsers();
+		for (User user : users) {
+			VisitedLocation visitedLocation = user.getLastVisitedLocation();
+			visitedLocations.put(user.getUserId().toString(), new Location(visitedLocation.location.latitude,
+					visitedLocation.location.longitude));
+		}
+		return visitedLocations;
+	}
+
 	private void addShutDownHook() {
 		Runtime.getRuntime().addShutdownHook(new Thread() { 
 		      public void run() {
