@@ -68,11 +68,17 @@ public class User {
 	public void clearVisitedLocations() {
 		visitedLocations.clear();
 	}
-	
-	public void addUserReward(UserReward userReward) {
-		if(userRewards.stream().filter(r -> !r.attraction.attractionName.equals(userReward.attraction)).count() == 0) {
-			userRewards.add(userReward);
+
+	public boolean addIfNotInUserRewards(UserReward userReward) {
+		List<UserReward> userRewards = getUserRewards();
+		List<UserReward> userRewardsCopy = new ArrayList<>(userRewards);
+		for (UserReward userReward1 : userRewardsCopy) {
+			if (userReward1.attraction.attractionName.equals(userReward.attraction.attractionName)) {
+				return false;
+			}
 		}
+		userRewards.add(userReward);
+		return true;
 	}
 	
 	public List<UserReward> getUserRewards() {
