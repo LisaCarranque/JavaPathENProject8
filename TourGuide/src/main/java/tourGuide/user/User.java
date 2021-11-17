@@ -1,12 +1,12 @@
 package tourGuide.user;
 
+import tourGuide.model.Provider;
+import tourGuide.model.VisitedLocation;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-
-import gpsUtil.location.VisitedLocation;
-import tripPricer.Provider;
 
 public class User {
 	private final UUID userId;
@@ -69,7 +69,7 @@ public class User {
 		visitedLocations.clear();
 	}
 
-	public boolean addIfNotInUserRewards(UserReward userReward) {
+/*	public boolean addIfNotInUserRewards(UserReward userReward) {
 		List<UserReward> userRewards = getUserRewards();
 		List<UserReward> userRewardsCopy = new ArrayList<>(userRewards);
 		for (UserReward userReward1 : userRewardsCopy) {
@@ -79,7 +79,7 @@ public class User {
 		}
 		userRewards.add(userReward);
 		return true;
-	}
+	}*/
 	
 	public List<UserReward> getUserRewards() {
 		return userRewards;
