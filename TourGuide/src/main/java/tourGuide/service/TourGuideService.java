@@ -1,60 +1,60 @@
 package tourGuide.service;
 
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import tourGuide.dto.NearByAttractionDto;
+import tourGuide.gps.Gps;
+import tourGuide.helper.InternalTestHelper;
+import tourGuide.model.Attraction;
+import tourGuide.model.Location;
+import tourGuide.model.Provider;
+import tourGuide.model.VisitedLocation;
+import tourGuide.proxies.GpsUtilProxy;
+import tourGuide.proxies.TripPricerProxy;
+import tourGuide.user.User;
+import tourGuide.user.UserPreferences;
+import tourGuide.user.UserReward;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import lombok.extern.log4j.Log4j2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import gpsUtil.GpsUtil;
-import gpsUtil.location.Attraction;
-import gpsUtil.location.Location;
-import gpsUtil.location.VisitedLocation;
-import tourGuide.dto.NearByAttractionDto;
-import tourGuide.helper.InternalTestHelper;
-import tourGuide.tracker.Tracker;
-import tourGuide.user.User;
-import tourGuide.user.UserPreferences;
-import tourGuide.user.UserReward;
-import tripPricer.Provider;
-import tripPricer.TripPricer;
-
 @Log4j2
 @Service
-public class TourGuideService {
-	private final GpsUtil gpsUtil;
+public class TourGuideService implements  ITourGuideService {
 	private final RewardsService rewardsService;
-	private final TripPricer tripPricer = new TripPricer();
-	public final Tracker tracker;
+	private final GpsUtilProxy gpsUtilProxy;
+	public final Gps gps;
 	boolean testMode = true;
-	
-	public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService) {
-		this.gpsUtil = gpsUtil;
+
+	@Autowired
+	TripPricerProxy tripPricerProxy;
+
+	public TourGuideService(RewardsService rewardsService, GpsUtilProxy gpsUtilProxy) {
 		this.rewardsService = rewardsService;
-		
+		this.gpsUtilProxy = gpsUtilProxy;
+
 		if(testMode) {
 			log.info("TestMode enabled");
 			log.debug("Initializing users");
 			initializeInternalUsers();
 			log.debug("Finished initializing users");
 		}
-		tracker = new Tracker(this);
+		gps = new Gps(this);
 		addShutDownHook();
 	}
-	
+
 	public List<UserReward> getUserRewards(User user) {
 		return user.getUserRewards();
 	}
-	
+
 	public VisitedLocation getUserLocation(User user) {
 		VisitedLocation visitedLocation = (user.getVisitedLocations().size() > 0) ?
 			user.getLastVisitedLocation() :
-			trackUserLocation(user);
+			calculateUserLocation(user);
 		return visitedLocation;
 	}
 	
@@ -72,17 +72,18 @@ public class TourGuideService {
 		}
 	}
 	
-	public List<Provider> getTripDeals(User user) {
+	public List<Provider> getTripDeals(User user, TripPricerProxy tripPricerProxy) {
 		int cumulatativeRewardPoints = user.getUserRewards().stream().mapToInt(i -> i.getRewardPoints()).sum();
-		List<Provider> providers = tripPricer.getPrice(tripPricerApiKey, user.getUserId(), user.getUserPreferences().getNumberOfAdults(), 
+		List<Provider> providers = tripPricerProxy.getPrice(tripPricerApiKey, user.getUserId(), user.getUserPreferences().getNumberOfAdults(),
 				user.getUserPreferences().getNumberOfChildren(), user.getUserPreferences().getTripDuration(), cumulatativeRewardPoints);
 		user.setTripDeals(providers);
 		return providers;
 	}
 	
-	public VisitedLocation trackUserLocation(User user) {
-		VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
+	public VisitedLocation calculateUserLocation(User user) {
+		VisitedLocation visitedLocation = gpsUtilProxy.calculateUserLocation(String.valueOf(user.getUserId()));
 		user.addToVisitedLocations(visitedLocation);
+		log.info(visitedLocation);
 		rewardsService.calculateRewards(user);
 		return visitedLocation;
 	}
@@ -134,7 +135,7 @@ public class TourGuideService {
 	private void addShutDownHook() {
 		Runtime.getRuntime().addShutdownHook(new Thread() { 
 		      public void run() {
-		        tracker.stopTracking();
+		        gps.stopTracking();
 		      } 
 		    }); 
 	}
