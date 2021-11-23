@@ -8,12 +8,16 @@ import tourGuide.model.Provider;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * This interface is used as proxy for Feign Client Discovery
+ * which allows to use the TripPricer microservice endpoints
+ */
 @FeignClient(name = "TripPricer", url = "localhost:9001")
 public interface TripPricerProxy {
 
     @GetMapping("/getPrice")
-    public List<Provider> getPrice(@RequestParam String apiKey, @RequestParam UUID attractionId,
-                                   @RequestParam int adults, @RequestParam int children,
-                                   @RequestParam int nightsStay, @RequestParam int rewardsPoints);
+    public List<Provider> getPrice(@RequestParam("apiKey") String apiKey, @RequestParam("attractionId") UUID attractionId,
+                                   @RequestParam("adults") int adults, @RequestParam("children") int children,
+                                   @RequestParam("nightsStay") int nightsStay, @RequestParam("rewardsPoints") int rewardsPoints);
 
 }

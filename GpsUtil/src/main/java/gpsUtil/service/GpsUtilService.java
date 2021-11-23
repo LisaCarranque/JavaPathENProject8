@@ -19,8 +19,9 @@ public class GpsUtilService {
     GpsUtil gpsUtil;
 
     /**
-     *
-     * Get user location from gpsUtil
+     * This method calculates the current user location
+     * @param userId the UUID of the targeted user
+     * @return the current user location
      */
     public VisitedLocation getUserLocation(String userId) {
         Locale.setDefault(Locale.US);
@@ -28,8 +29,8 @@ public class GpsUtilService {
     }
 
     /**
-     * Get list of attractions from gpsUtil
-     * @return
+     * This method gets the list of attractions
+     * @return the list of attractions in TourGuide
      */
     public List<Attraction> getAttractions() {
         return gpsUtil.getAttractions();

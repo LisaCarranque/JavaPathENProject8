@@ -1,12 +1,17 @@
-package tourGuide.service;
+package tourGuide.IT;
 
+import lombok.extern.log4j.Log4j2;
 import org.javamoney.moneta.Money;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import tourGuide.TourGuideModule;
 import tourGuide.dto.NearByAttractionDto;
 import tourGuide.helper.InternalTestHelper;
 import tourGuide.model.Attraction;
@@ -16,6 +21,8 @@ import tourGuide.model.VisitedLocation;
 import tourGuide.proxies.GpsUtilProxy;
 import tourGuide.proxies.RewardCentralProxy;
 import tourGuide.proxies.TripPricerProxy;
+import tourGuide.service.RewardsService;
+import tourGuide.service.TourGuideService;
 import tourGuide.user.User;
 import tourGuide.user.UserPreferences;
 
@@ -23,28 +30,29 @@ import javax.money.CurrencyUnit;
 import javax.money.Monetary;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes={TourGuideModule.class})
+@EnableAutoConfiguration
+@ComponentScan("tourGuide")
+@EnableFeignClients(clients = {GpsUtilProxy.class, RewardCentralProxy.class, TripPricerProxy.class})
+@Log4j2
+public class TestTourGuideServiceIT {
 
-@ExtendWith(MockitoExtension.class)
-public class TourGuideServiceTest {
-
-    @InjectMocks
+    @Autowired
     TourGuideService tourGuideService;
-    @Mock
-    RewardsService rewardService;
-    @Mock
-    GpsUtilProxy gpsUtilProxy;
-    @Mock
-    RewardCentralProxy rewardCentralProxy;
-    @Mock
-    TripPricerProxy tripPricerProxy;
 
-    @BeforeEach
-    public void set() {
-        Locale.setDefault(Locale.US);
-    }
+    @Autowired
+    RewardsService rewardsService;
+
+    @Autowired
+    private GpsUtilProxy gpsUtilProxy;
+
+    @Autowired
+    private RewardCentralProxy rewardCentralProxy;
+
+    @Autowired
+    private TripPricerProxy tripPricerProxy;
+
 
     @Test
     public void getUserLocation() {
@@ -56,13 +64,10 @@ public class TourGuideServiceTest {
         attractionList.add(attraction);
 
         User user = new User(uuid, "jon", "000", "jon@tourGuide.com");
-        Location location = new Location(1D, 1D);
-        VisitedLocation visitedLocationOutput = new VisitedLocation(uuid, location, new Date());
-        when(gpsUtilProxy.calculateUserLocation(user.getUserId().toString())).thenReturn(visitedLocationOutput);
 
         VisitedLocation visitedLocation = tourGuideService.calculateUserLocation(user);
         tourGuideService.gps.stopTracking();
-        assertTrue(visitedLocation.userId.equals(user.getUserId()));
+        Assertions.assertTrue(visitedLocation.userId.equals(user.getUserId()));
     }
 
     @Test
@@ -82,8 +87,8 @@ public class TourGuideServiceTest {
 
         tourGuideService.gps.stopTracking();
 
-        assertEquals(user, retrivedUser);
-        assertEquals(user2, retrivedUser2);
+        Assertions.assertEquals(user, retrivedUser);
+        Assertions.assertEquals(user2, retrivedUser2);
     }
 
     @Test
@@ -102,8 +107,8 @@ public class TourGuideServiceTest {
 
         tourGuideService.gps.stopTracking();
 
-        assertTrue(allUsers.contains(user));
-        assertTrue(allUsers.contains(user2));
+        Assertions.assertTrue(allUsers.contains(user));
+        Assertions.assertTrue(allUsers.contains(user2));
     }
 
     @Test
@@ -113,15 +118,12 @@ public class TourGuideServiceTest {
         TourGuideService tourGuideService = new TourGuideService(rewardsService, gpsUtilProxy, tripPricerProxy);
 
         User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
-        Location location = new Location(1D, 1D);
-        VisitedLocation visitedLocationOutput = new VisitedLocation(user.getUserId(), location, new Date());
 
-        when(gpsUtilProxy.calculateUserLocation(user.getUserId().toString())).thenReturn(visitedLocationOutput);
         VisitedLocation visitedLocation = tourGuideService.calculateUserLocation(user);
 
         tourGuideService.gps.stopTracking();
 
-        assertEquals(user.getUserId(), visitedLocation.userId);
+        Assertions.assertEquals(user.getUserId(), visitedLocation.userId);
     }
 
     @Test
@@ -144,19 +146,13 @@ public class TourGuideServiceTest {
         attractionList.add(attraction4);
         attractionList.add(attraction5);
 
-        Location location = new Location(1D, 1D);
-        VisitedLocation visitedLocationOutput = new VisitedLocation(user.getUserId(), location, new Date());
-
-        when(gpsUtilProxy.getAttractions()).thenReturn(attractionList);
-        when(gpsUtilProxy.calculateUserLocation(user.getUserId().toString())).thenReturn(visitedLocationOutput);
-
         VisitedLocation visitedLocation = tourGuideService.calculateUserLocation(user);
 
         List<NearByAttractionDto> attractions = tourGuideService.getNearByAttractions(gpsUtilProxy.getAttractions(), user, visitedLocation, 5);
 
         tourGuideService.gps.stopTracking();
 
-        assertEquals(5, attractions.size());
+        Assertions.assertEquals(5, attractions.size());
     }
 
     @Test
@@ -165,36 +161,13 @@ public class TourGuideServiceTest {
         InternalTestHelper.setInternalUserNumber(0);
         TourGuideService tourGuideService = new TourGuideService(rewardsService, gpsUtilProxy, tripPricerProxy);
         UUID uuid = UUID.randomUUID();
-        UUID uuid2 = UUID.randomUUID();
         User user = new User(uuid, "jon", "000", "jon@tourGuide.com");
 
-        List<Provider> providerList = new ArrayList<>();
-        Provider provider1 = new Provider(UUID.randomUUID(), "provider1", 100);
-        Provider provider2 = new Provider(UUID.randomUUID(), "provider2", 200);
-        Provider provider3 = new Provider(UUID.randomUUID(), "provider3", 300);
-        Provider provider4 = new Provider(UUID.randomUUID(), "provider4", 400);
-        Provider provider5 = new Provider(UUID.randomUUID(), "provider5", 500);
-        Provider provider6 = new Provider(UUID.randomUUID(), "provider6", 600);
-        Provider provider7 = new Provider(UUID.randomUUID(), "provider7", 700);
-        Provider provider8 = new Provider(UUID.randomUUID(), "provider8", 800);
-        Provider provider9 = new Provider(UUID.randomUUID(), "provider9", 900);
-        Provider provider10 = new Provider(UUID.randomUUID(), "provider10", 1000);
-        providerList.add(provider1);
-        providerList.add(provider2);
-        providerList.add(provider3);
-        providerList.add(provider4);
-        providerList.add(provider5);
-        providerList.add(provider6);
-        providerList.add(provider7);
-        providerList.add(provider8);
-        providerList.add(provider9);
-        providerList.add(provider10);
-        when(tripPricerProxy.getPrice("test-server-api-key", uuid, 1, 0, 1, 0)).thenReturn(providerList);
         List<Provider> providers = tourGuideService.getTripDeals(user);
 
         tourGuideService.gps.stopTracking();
 
-        assertEquals(10, providers.size());
+        Assertions.assertEquals(5, providers.size());
     }
 
     @Test
@@ -217,13 +190,13 @@ public class TourGuideServiceTest {
         tourGuideService.setUserPreferences(user.getUserName(), userPreferences);
 
         tourGuideService.gps.stopTracking();
-        assertEquals(user.getUserPreferences().getNumberOfAdults(), 1);
-        assertEquals(user.getUserPreferences().getNumberOfChildren(), 1);
-        assertEquals(user.getUserPreferences().getAttractionProximity(), 1);
-        assertEquals(user.getUserPreferences().getTicketQuantity(), 1);
-        assertEquals(user.getUserPreferences().getTripDuration(), 1);
-        assertEquals(user.getUserPreferences().getHighPricePoint(), Money.of(1, currency));
-        assertEquals(user.getUserPreferences().getLowerPricePoint(), Money.of(0, currency));
+        Assertions.assertEquals(user.getUserPreferences().getNumberOfAdults(), 1);
+        Assertions.assertEquals(user.getUserPreferences().getNumberOfChildren(), 1);
+        Assertions.assertEquals(user.getUserPreferences().getAttractionProximity(), 1);
+        Assertions.assertEquals(user.getUserPreferences().getTicketQuantity(), 1);
+        Assertions.assertEquals(user.getUserPreferences().getTripDuration(), 1);
+        Assertions.assertEquals(user.getUserPreferences().getHighPricePoint(), Money.of(1, currency));
+        Assertions.assertEquals(user.getUserPreferences().getLowerPricePoint(), Money.of(0, currency));
     }
 
     @Test
@@ -236,6 +209,6 @@ public class TourGuideServiceTest {
         HashMap<String, Location> visitedLocations = tourGuideService.getAllCurrentLocations();
 
         tourGuideService.gps.stopTracking();
-        assertTrue(visitedLocations.size() == 100);
+        Assertions.assertTrue(visitedLocations.size() == 100);
     }
 }

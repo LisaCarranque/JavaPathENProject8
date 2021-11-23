@@ -55,7 +55,7 @@ public class TourGuideUnitTest {
         User user = new User(uuid, "0", "0", "0");
         Location location = new Location(1D, 1D);
         VisitedLocation visitedLocation = new VisitedLocation(uuid, location, new Date());
-        Attraction attraction = new Attraction("Disney", "Disney", "Disney",1D, 1D);
+        Attraction attraction = new Attraction("Disney", "Disney", "Disney", 1D, 1D);
         UserReward userReward = new UserReward(visitedLocation, attraction);
         rewardsService.addIfNotInUserRewards(user, userReward);
         assertNotNull(tourGuideService.getUserRewards(user));
@@ -103,10 +103,11 @@ public class TourGuideUnitTest {
     public void addUserTest() {
         InternalTestHelper.setInternalUserNumber(100);
         List<User> users = tourGuideService.getAllUsers();
+        // assertEquals(users.size()+1, 101);
         UUID uuid = UUID.randomUUID();
         User user = new User(uuid, "0", "0", "0");
         tourGuideService.addUser(user);
-        assertEquals(users.size()+1, tourGuideService.getAllUsers().size());
+        assertEquals(users.size() + 1, tourGuideService.getAllUsers().size());
     }
 
     @Test
@@ -114,7 +115,7 @@ public class TourGuideUnitTest {
         UUID uuid = UUID.randomUUID();
         User user = new User(uuid, "internalUser0", "0", "0");
         when(tripPricerProxy.getPrice("test-server-api-key", uuid, 1, 0, 1, 0)).thenReturn(new ArrayList<>());
-        tourGuideService.getTripDeals(user, tripPricerProxy);
+        tourGuideService.getTripDeals(user);
         verify(tripPricerProxy, times(1)).getPrice("test-server-api-key", uuid, 1, 0, 1, 0);
     }
 
@@ -125,6 +126,7 @@ public class TourGuideUnitTest {
         Location location = new Location(1D, 1D);
         VisitedLocation visitedLocation = new VisitedLocation(uuid, location, new Date());
         when(gpsUtilProxy.calculateUserLocation(any())).thenReturn(visitedLocation);
+//        when(gpsUtilProxy.getAttractions()).thenReturn(new ArrayList<>());
         doNothing().when(rewardsService).calculateRewards(any());
         tourGuideService.calculateUserLocation(user);
     }
@@ -135,10 +137,10 @@ public class TourGuideUnitTest {
         User user = new User(uuid, "internalUser0", "0", "0");
         Location location = new Location(1D, 1D);
         VisitedLocation visitedLocation = new VisitedLocation(uuid, location, new Date());
-        Attraction attraction1 = new Attraction("Disney1", "Disney", "Disney",1D, 1D);
-        Attraction attraction2 = new Attraction("Disney2", "Disney", "Disney",2D, 1D);
-        Attraction attraction3 = new Attraction("Disney3", "Disney", "Disney",3D, 1D);
-        Attraction attraction4 = new Attraction("Disney4", "Disney", "Disney",4D, 1D);
+        Attraction attraction1 = new Attraction("Disney1", "Disney", "Disney", 1D, 1D);
+        Attraction attraction2 = new Attraction("Disney2", "Disney", "Disney", 2D, 1D);
+        Attraction attraction3 = new Attraction("Disney3", "Disney", "Disney", 3D, 1D);
+        Attraction attraction4 = new Attraction("Disney4", "Disney", "Disney", 4D, 1D);
         List<Attraction> attractions = new ArrayList<>();
         attractions.add(attraction1);
         attractions.add(attraction2);
@@ -153,17 +155,17 @@ public class TourGuideUnitTest {
         UUID uuid = UUID.randomUUID();
         User user = new User(uuid, "internalUser0", "0", "0");
         Location location = new Location(10D, 10D);
-        Attraction attraction1 = new Attraction("Disney1", "Disney", "Disney",1D, 1D);
-        Attraction attraction2 = new Attraction("Disney2", "Disney", "Disney",2D, 1D);
-        Attraction attraction3 = new Attraction("Disney3", "Disney", "Disney",3D, 1D);
-        Attraction attraction4 = new Attraction("Disney4", "Disney", "Disney",4D, 1D);
+        Attraction attraction1 = new Attraction("Disney1", "Disney", "Disney", 1D, 1D);
+        Attraction attraction2 = new Attraction("Disney2", "Disney", "Disney", 2D, 1D);
+        Attraction attraction3 = new Attraction("Disney3", "Disney", "Disney", 3D, 1D);
+        Attraction attraction4 = new Attraction("Disney4", "Disney", "Disney", 4D, 1D);
         List<Attraction> attractions = new ArrayList<>();
         attractions.add(attraction1);
         attractions.add(attraction2);
         attractions.add(attraction3);
         attractions.add(attraction4);
         when(rewardsService.getDistance(any(), any())).thenReturn(10D);
-        Iterable<NearByAttractionDto> attractionList = tourGuideService.getClosestAttraction(user,  location, attractions, 4);
+        Iterable<NearByAttractionDto> attractionList = tourGuideService.getClosestAttractions(user, location, attractions, 4);
         assertNotNull(attractionList);
     }
 

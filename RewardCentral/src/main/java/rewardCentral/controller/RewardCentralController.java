@@ -8,12 +8,21 @@ import rewardCentral.service.RewardCentralService;
 
 import java.util.UUID;
 
+/**
+ * This controller is responsible for calculating reward points
+ */
 @RestController
 public class RewardCentralController {
 
     @Autowired
     RewardCentralService rewardsCentralService;
 
+    /**
+     * This endpoint calculates the reward points of an attraction based on the user UUID and the attraction UUID
+     * @param attractionId the UUID of the targeted attraction
+     * @param userId the UUID of the targeted user
+     * @return
+     */
     @RequestMapping("/getAttractionRewardPoints")
     public int getAttractionRewardPoints(@RequestParam UUID attractionId, @RequestParam UUID userId) {
         return rewardsCentralService.getAttractionRewardPoints(attractionId, userId);
