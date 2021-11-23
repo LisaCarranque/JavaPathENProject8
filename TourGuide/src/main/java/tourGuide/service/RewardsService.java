@@ -1,7 +1,9 @@
 package tourGuide.service;
 
+import com.google.common.collect.Lists;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import tourGuide.model.Attraction;
 import tourGuide.model.Location;
@@ -12,7 +14,13 @@ import tourGuide.user.User;
 import tourGuide.user.UserReward;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Log4j2
 @Service
@@ -20,7 +28,7 @@ public class RewardsService {
     private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.15077945;
 
     // proximity in miles
-    private int defaultProximityBuffer = 1000000000;
+    private int defaultProximityBuffer = 10;
     private int proximityBuffer = defaultProximityBuffer;
     private int attractionProximityRange = 200;
 
@@ -32,7 +40,7 @@ public class RewardsService {
 
     public RewardsService(GpsUtilProxy gpsUtilProxy, RewardCentralProxy rewardCentralProxy) {
         this.gpsUtilProxy = gpsUtilProxy;
-        this.rewardCentralProxy= rewardCentralProxy;
+        this.rewardCentralProxy = rewardCentralProxy;
     }
 
     public void setProximityBuffer(int proximityBuffer) {
@@ -43,35 +51,77 @@ public class RewardsService {
         proximityBuffer = defaultProximityBuffer;
     }
 
-	public void calculateRewards(User user) {
-		List<VisitedLocation> userLocations = user.getVisitedLocations();
-		List<Attraction> attractions = gpsUtilProxy.getAttractions();
-		List<VisitedLocation> visitedLocations = new ArrayList<>(userLocations);
-		visitedLocations.forEach(location -> {
-			attractions.stream()
-					.filter(attraction -> nearAttraction(location, attraction))
-					.forEach(attraction -> addIfNotInUserRewards(user, new UserReward(location, attraction, getRewardPoints(attraction, user))));
 
-		});
-	}
+    //TODO : replace by calculateRewardsWithStreamAndExecutor
 
-    public void calculateRewardsWithPerformance(List<User> users) {
+    /**
+     * This method is used to calculate the rewards for a targeted user
+     * @param user the targeted user
+     */
+    public void calculateRewards(User user) {
+        List<VisitedLocation> userLocations = user.getVisitedLocations();
+        List<Attraction> attractions = gpsUtilProxy.getAttractions();
+        List<VisitedLocation> visitedLocations = new ArrayList<>(userLocations);
+        visitedLocations.forEach(location -> {
+            attractions.stream()
+                    .filter(attraction -> nearAttraction(location, attraction))
+                    .forEach(attraction -> addIfNotInUserRewards(user, new UserReward(location, attraction, getRewardPoints(attraction, user))));
 
-        users.stream().parallel().forEach(user -> {
-                    List<VisitedLocation> userLocations = user.getVisitedLocations();
-                    List<Attraction> attractions = gpsUtilProxy.getAttractions();
-                    List<VisitedLocation> visitedLocations = new ArrayList<>(userLocations);
-                    visitedLocations.forEach(location -> {
-                        attractions.stream()
-                                .filter(attraction -> nearAttraction(location, attraction))
-                                .forEach(attraction -> addIfNotInUserRewards(user, new UserReward(location, attraction, getRewardPoints(attraction, user))));
-
-                    });
-                }
-        );
-
+        });
     }
 
+    /**
+     * This method is used to calculate the user rewards with better performance thanks to stream, threads, and ExecutorService
+     * @param users the list of the targeted users
+     * @throws InterruptedException the exception thrown when a thread is waiting, sleeping, or otherwise occupied,
+     * and the thread is interrupted, either before or during the activity.
+     */
+    public void calculateRewardsWithStreamAndExecutor(List<User> users) throws InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(100);
+        List<List<User>> list = Lists.partition(users, 2);
+        Set<Callable<String>> callables = new HashSet<Callable<String>>();
+        for (int i = 0; i < list.size(); i++) {
+            int finalI = i;
+            Callable<String> callable = () -> {
+                {
+                    list.get(finalI).stream().forEach(user -> {
+                        List<VisitedLocation> userLocations = user.getVisitedLocations();
+                        List<Attraction> attractions = gpsUtilProxy.getAttractions();
+                        List<VisitedLocation> visitedLocations = new ArrayList<>(userLocations);
+                        visitedLocations.forEach(location -> {
+                            attractions.stream()
+                                    .filter(attraction -> nearAttraction(location, attraction))
+                                    .forEach(attraction -> addIfNotInUserRewards(user, new UserReward(location, attraction, getRewardPoints(attraction, user))));
+                        });
+                    });
+                }
+                return null;
+            };
+            callables.add(callable);
+        }
+        executor.invokeAll(callables);
+        executor.shutdown();
+        executor.awaitTermination(1200, TimeUnit.SECONDS);
+        System.out.println("Fin thread principal");
+    }
+
+/*     public List<VisitedLocation> getVisitedLocation(List<User> users, int i) {
+        List<VisitedLocation> visitedLocations = new ArrayList<>();
+        users.stream().parallel().forEach(user -> visitedLocations.addAll(user.getVisitedLocations()));
+        return visitedLocations;
+    }*/
+
+/*    public void addUserReward(User user, UserReward userReward) {
+        List<UserReward> userRewards = new ArrayList<>();
+        userRewards.add(userReward);
+    }*/
+
+    /**
+     * This method adds a reward in the user rewards if this reward is not already in this list
+     * @param user the targeted user
+     * @param userReward the former list of user rewards
+     * @return the updated list of the user rewards
+     */
     public boolean addIfNotInUserRewards(User user, UserReward userReward) {
         List<UserReward> userRewards = user.getUserRewards();
         List<UserReward> userRewardsCopy = new ArrayList<>(userRewards);
@@ -84,18 +134,38 @@ public class RewardsService {
         return true;
     }
 
+
     public boolean isWithinAttractionProximity(Attraction attraction, Location location) {
         return getDistance(attraction, location) > attractionProximityRange ? false : true;
     }
 
+    /**
+     * This method determines if a visitedLocation is near to an attraction
+     * according to the proximityBuffer value
+     * @param visitedLocation the visitedLocation to evaluate
+     * @param attraction the attraction which is used as reference for this evaluation of distance
+     * @return a boolean which indicates if this visitedLocation is near enough from the attraction
+     */
     private boolean nearAttraction(VisitedLocation visitedLocation, Attraction attraction) {
         return getDistance(attraction, visitedLocation.location) > proximityBuffer ? false : true;
     }
 
+    /**
+     * This method calculates the user's reward points for an attraction
+     * @param attraction the UUID of the targeted attraction
+     * @param user the UUID of the user
+     * @return the integer value of the reward points for this tuple (attraction, user)
+     */
     private int getRewardPoints(Attraction attraction, User user) {
         return rewardCentralProxy.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
     }
 
+    /**
+     * This method calculates the distance between two locations
+     * @param loc1 the first location
+     * @param loc2 the second location
+     * @return the distance between the two locations
+     */
     public double getDistance(Location loc1, Location loc2) {
         double lat1 = Math.toRadians(loc1.latitude);
         double lon1 = Math.toRadians(loc1.longitude);

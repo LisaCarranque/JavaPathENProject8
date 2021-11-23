@@ -8,6 +8,10 @@ import tourGuide.model.VisitedLocation;
 
 import java.util.List;
 
+/**
+ * This interface is used as proxy for Feign Client Discovery
+ * which allows to use the GpsUtil microservice endpoints
+ */
 @FeignClient(name = "GpsUtil", url = "localhost:9003")
 public interface GpsUtilProxy {
 

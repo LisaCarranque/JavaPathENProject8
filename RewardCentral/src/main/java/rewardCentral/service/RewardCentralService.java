@@ -12,10 +12,17 @@ import java.util.UUID;
 public class RewardCentralService {
 
     @Autowired
-    RewardCentral rewardsCentral;
+    RewardCentral rewardCentral;
 
+    /**
+     * This method calculates reward points of an attraction for one user
+     * @param attractionId the UUID of the targeted attraction
+     * @param userId the UUID of the targeted user
+     * @return the result of the rewardCentral's method getAttractionRewardPoints
+     * which is the integer value of the reward points for this tuple (attractionId, userId)
+     */
     public int getAttractionRewardPoints(UUID attractionId, UUID userId) {
-        return rewardsCentral.getAttractionRewardPoints(attractionId, userId);
+        return rewardCentral.getAttractionRewardPoints(attractionId, userId);
     }
 
 }
