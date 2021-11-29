@@ -1,0 +1,43 @@
+version: "3"
+services:
+
+  gpsutil:
+    container_name: gpsutil
+    image: gpsutil
+    ports:
+      - "9003:9003"
+    networks:
+      docker-net:
+        ipv4_address: ${IP_GPSUTIL}
+
+  rewardcentral:
+    container_name: rewardcentral
+    image: rewardcentral
+    ports:
+      - "9002:9002"
+    networks:
+      docker-net:
+        ipv4_address: ${IP_REWARDCENTRAL}
+
+  trippricer:
+    container_name: trippricer
+    image: trippricer
+    ports:
+      - "9001:9001"
+    networks:
+      docker-net:
+        ipv4_address: ${IP_TRIPPRICER}
+
+  tourguide:
+    container_name: tourguide
+    image: tourguide
+    ports:
+      - "8080:8080"
+    networks:
+      docker-net:
+        ipv4_address: ${IP_TOURGUIDE}
+
+networks:
+  docker-net:
+
+
