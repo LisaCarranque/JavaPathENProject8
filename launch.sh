@@ -1,4 +1,3 @@
-cd JavaPathENProject8
 cd GpsUtil
 docker build -t gpsutil .
 cd ..
