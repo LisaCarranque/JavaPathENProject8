@@ -31,6 +31,14 @@ public interface ITourGuideService {
     public VisitedLocation getUserLocation(User user);
 
     /**
+     * This method gets users location
+     *
+     * @param users the targeted users
+     * @return the user location
+     */
+    public List<VisitedLocation> getUsersLocation(List<User> users) throws InterruptedException;
+
+    /**
      * This method gets a user by username
      *
      * @param userName the username of the targeted user
