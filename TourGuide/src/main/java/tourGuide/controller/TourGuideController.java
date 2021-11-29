@@ -17,6 +17,7 @@ import tourGuide.service.ITourGuideService;
 import tourGuide.user.User;
 import tourGuide.user.UserPreferences;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -56,9 +57,23 @@ public class TourGuideController {
      * @return the current location of the targeted user
      */
     @RequestMapping("/getLocation")
-    public String getLocation(@RequestParam String userName) {
+    public Location getLocation(@RequestParam String userName) {
         VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
-        return JsonStream.serialize(visitedLocation.location);
+        return visitedLocation.location;
+    }
+
+    /**
+     * This endpoint returns the location for a list of users targeted by usernames
+     *
+     * @param userNames the usernames of the targeted users
+     * @return the current locations of the targeted users
+     */
+    @RequestMapping("/getLocations")
+    public List<VisitedLocation> getLocations(@RequestParam List<String> userNames) throws InterruptedException {
+        List<User> users = new ArrayList<>();
+        userNames.stream().forEach(userName->users.add(getUser(userName)));
+        List<VisitedLocation> visitedLocations = tourGuideService.getUsersLocation(users);
+        return visitedLocations;
     }
 
 
@@ -93,9 +108,9 @@ public class TourGuideController {
      * @return the list of the current locations for all users
      */
     @RequestMapping("/getAllCurrentLocations")
-    public String getAllCurrentLocations() {
+    public HashMap<String, Location> getAllCurrentLocations() {
         HashMap<String, Location> locationHashMap = tourGuideService.getAllCurrentLocations();
-        return JsonStream.serialize(locationHashMap);
+        return locationHashMap;
     }
 
     /**

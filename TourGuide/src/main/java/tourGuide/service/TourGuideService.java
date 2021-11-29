@@ -73,6 +73,17 @@ public class TourGuideService implements ITourGuideService {
     }
 
     /**
+     * This method gets users location
+     *
+     * @param users the targeted users
+     * @return the user location
+     */
+    public List<VisitedLocation> getUsersLocation(List<User> users) throws InterruptedException {
+        List<VisitedLocation> visitedLocations = trackUsersLocation(users);
+        return visitedLocations;
+    }
+
+    /**
      * This method gets a user by username
      *
      * @param userName the username of the targeted user
@@ -117,6 +128,12 @@ public class TourGuideService implements ITourGuideService {
         return providers;
     }
 
+    /**
+     * This method calculates user location for a user
+     *
+     * @param user the list of users
+     * @return the location for the targeted user
+     */
     public VisitedLocation trackUserLocation(User user) {
         log.info("Tracking user location for user {}", user.getUserName());
         VisitedLocation visitedLocation = gpsUtilProxy.calculateUserLocation(String.valueOf(user.getUserId()));
