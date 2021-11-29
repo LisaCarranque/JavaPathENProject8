@@ -58,23 +58,11 @@ public class RewardServiceTest {
 
         Attraction attraction = gpsUtilProxy.getAttractions().get(0);
         user.addToVisitedLocations(new VisitedLocation(user.getUserId(), attraction, new Date()));
-        tourGuideService.calculateUserLocation(user);
+        tourGuideService.trackUserLocation(user);
         List<UserReward> userRewards = user.getUserRewards();
-        tourGuideService.gps.stopTracking();
+        tourGuideService.tracker.stopTracking();
         assertTrue(userRewards.size() == 1);
     }
-
-/*    @Test
-    public void isWithinAttractionProximity() {
-        RewardsService rewardsService = new RewardsService(gpsUtilProxy, rewardCentralProxy);
-        Attraction attraction1 = new Attraction("Disney1", "Disney", "Disney", 1D, 1D);
-        List<Attraction> attractionList = new ArrayList<>();
-        attractionList.add(attraction1);
-        Location location = new Location(1D, 1D);
-        when(gpsUtilProxy.getAttractions()).thenReturn(attractionList);
-        Attraction attraction = gpsUtilProxy.getAttractions().get(0);
-        assertTrue(rewardsService.isWithinAttractionProximity(attraction, attraction));
-    }*/
 
     @Test
     public void nearAllAttractions() {
@@ -93,7 +81,7 @@ public class RewardServiceTest {
 
         rewardsService.calculateRewards(tourGuideService.getAllUsers().get(0));
         List<UserReward> userRewards = tourGuideService.getUserRewards(tourGuideService.getAllUsers().get(0));
-        tourGuideService.gps.stopTracking();
+        tourGuideService.tracker.stopTracking();
 
         assertEquals(gpsUtilProxy.getAttractions().size(), userRewards.size());
     }
@@ -125,7 +113,7 @@ public class RewardServiceTest {
 
         rewardsService.calculateRewards(user);
         List<UserReward> userRewards = tourGuideService.getUserRewards(user);
-        tourGuideService.gps.stopTracking();
+        tourGuideService.tracker.stopTracking();
 
         assertEquals(2, userRewards.size());
     }

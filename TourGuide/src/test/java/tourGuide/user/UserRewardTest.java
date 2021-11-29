@@ -18,10 +18,10 @@ public class UserRewardTest {
     @Test
     public void setAndGetUserReward() {
         User user = new User(UUID.randomUUID(), "name", "phone", "email");
-        Location location = new Location(1D,1D);
+        Location location = new Location(1D, 1D);
         VisitedLocation visitedLocation = new VisitedLocation(user.getUserId(), location, new Date());
         Attraction attraction = new Attraction("attraction", "city",
-                "state", 1D,1D);
+                "state", 1D, 1D);
         UserReward userReward = new UserReward(visitedLocation, attraction, 0);
         userReward.setRewardPoints(1);
         assertEquals(1, userReward.getRewardPoints());

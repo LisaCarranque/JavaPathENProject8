@@ -1,5 +1,6 @@
 package tourGuide;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,6 +12,7 @@ import tourGuide.proxies.TripPricerProxy;
 
 import java.util.Locale;
 
+@Log4j2
 @EnableAutoConfiguration
 @SpringBootApplication
 @EnableFeignClients(clients = {GpsUtilProxy.class, RewardCentralProxy.class, TripPricerProxy.class})
@@ -19,6 +21,7 @@ public class Application {
 
     public static void main(String[] args) {
         Locale.setDefault(Locale.US);
+        log.info("Launch TourGuide module");
         SpringApplication.run(Application.class, args);
     }
 

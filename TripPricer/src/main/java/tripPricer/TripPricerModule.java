@@ -8,6 +8,7 @@ public class TripPricerModule {
 
     /**
      * This method produces a bean TripPricer to be managed by the Spring container
+     *
      * @return the bean TripPricer
      */
     @Bean

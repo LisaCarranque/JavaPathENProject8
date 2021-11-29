@@ -1,20 +1,11 @@
 package tripPricer.service;
 
-import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import tripPricer.Provider;
-import tripPricer.TripPricer;
 
 import java.util.List;
 import java.util.UUID;
 
-@Log4j2
-@Service
-public class TripPricerService implements ITripPricerService {
-
-    @Autowired
-    TripPricer tripPricer;
+public interface ITripPricerService {
 
     /**
      * This method calculates the prices of the trip of one user according to the user preferences
@@ -29,9 +20,6 @@ public class TripPricerService implements ITripPricerService {
      * containing the id of the trip, the name of the provider, and the cost of this trip.
      */
     public List<Provider> getPrice(String apiKey, UUID attractionId, int adults,
-                                   int children, int nightsStay, int rewardsPoints) {
-        log.info("Getting price for apiKey {}, attraction {}, number of adults {}, number of children {}," +
-                "number of night stays {}, number of rewards points {}", apiKey, attractionId, adults, children, nightsStay, rewardsPoints);
-        return tripPricer.getPrice(apiKey, attractionId, adults, children, nightsStay, rewardsPoints);
-    }
+                                   int children, int nightsStay, int rewardsPoints);
+
 }

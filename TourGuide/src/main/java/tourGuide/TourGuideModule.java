@@ -18,6 +18,7 @@ public class TourGuideModule {
 
     /**
      * This method produces a bean RewardsService to be managed by the Spring container
+     *
      * @return the bean RewardsService
      */
     @Bean

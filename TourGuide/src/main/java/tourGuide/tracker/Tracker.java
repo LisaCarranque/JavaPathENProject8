@@ -1,4 +1,4 @@
-package tourGuide.gps;
+package tourGuide.tracker;
 
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Log4j2
-public class Gps extends Thread {
+public class Tracker extends Thread {
     private static final long trackingPollingInterval = TimeUnit.MINUTES.toSeconds(5);
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final TourGuideService tourGuideService;
@@ -32,7 +32,7 @@ public class Gps extends Thread {
     @Autowired
     RewardCentralProxy rewardCentralProxy;
 
-    public Gps(TourGuideService tourGuideService) {
+    public Tracker(TourGuideService tourGuideService) {
         this.tourGuideService = tourGuideService;
 
         executorService.submit(this);
@@ -60,8 +60,7 @@ public class Gps extends Thread {
             log.debug("Begin Tracker. Tracking " + users.size() + " users.");
             stopWatch.start();
             List<Attraction> attractions = gpsUtilProxy.getAttractions();
-            //users.forEach(u -> tourGuideService.calculateUserLocation(u));
-            tourGuideService.calculateUserLocationWithStreamAndExecutorAndTask(users);
+            tourGuideService.trackUsersLocation(users);
             stopWatch.stop();
             log.debug("Tracker Time Elapsed: " + TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()) + " seconds.");
             stopWatch.reset();

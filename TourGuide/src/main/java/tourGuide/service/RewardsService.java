@@ -3,13 +3,14 @@ package tourGuide.service;
 import com.google.common.collect.Lists;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.stereotype.Service;
 import tourGuide.model.Attraction;
 import tourGuide.model.Location;
 import tourGuide.model.VisitedLocation;
 import tourGuide.proxies.GpsUtilProxy;
 import tourGuide.proxies.RewardCentralProxy;
+import tourGuide.proxies.TripPricerProxy;
 import tourGuide.user.User;
 import tourGuide.user.UserReward;
 
@@ -24,7 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 @Log4j2
 @Service
-public class RewardsService {
+@EnableFeignClients(clients = {GpsUtilProxy.class, RewardCentralProxy.class, TripPricerProxy.class})
+public class RewardsService implements IRewardsService {
     private static final double STATUTE_MILES_PER_NAUTICAL_MILE = 1.15077945;
 
     // proximity in miles
@@ -51,14 +53,13 @@ public class RewardsService {
         proximityBuffer = defaultProximityBuffer;
     }
 
-
-    //TODO : replace by calculateRewardsWithStreamAndExecutor
-
     /**
      * This method is used to calculate the rewards for a targeted user
+     *
      * @param user the targeted user
      */
     public void calculateRewards(User user) {
+        log.info("calculating user rewards for user {}", user.getUserName());
         List<VisitedLocation> userLocations = user.getVisitedLocations();
         List<Attraction> attractions = gpsUtilProxy.getAttractions();
         List<VisitedLocation> visitedLocations = new ArrayList<>(userLocations);
@@ -72,11 +73,13 @@ public class RewardsService {
 
     /**
      * This method is used to calculate the user rewards with better performance thanks to stream, threads, and ExecutorService
+     *
      * @param users the list of the targeted users
      * @throws InterruptedException the exception thrown when a thread is waiting, sleeping, or otherwise occupied,
-     * and the thread is interrupted, either before or during the activity.
+     *                              and the thread is interrupted, either before or during the activity.
      */
-    public void calculateRewardsWithStreamAndExecutor(List<User> users) throws InterruptedException {
+    public void calculateUsersRewards(List<User> users) throws InterruptedException {
+        log.info("Calculating user rewards for list of users");
         ExecutorService executor = Executors.newFixedThreadPool(100);
         List<List<User>> list = Lists.partition(users, 2);
         Set<Callable<String>> callables = new HashSet<Callable<String>>();
@@ -102,66 +105,34 @@ public class RewardsService {
         executor.invokeAll(callables);
         executor.shutdown();
         executor.awaitTermination(1200, TimeUnit.SECONDS);
-        System.out.println("Fin thread principal");
+        log.info("end of main thread");
     }
-
-/*     public List<VisitedLocation> getVisitedLocation(List<User> users, int i) {
-        List<VisitedLocation> visitedLocations = new ArrayList<>();
-        users.stream().parallel().forEach(user -> visitedLocations.addAll(user.getVisitedLocations()));
-        return visitedLocations;
-    }*/
-
-/*    public void addUserReward(User user, UserReward userReward) {
-        List<UserReward> userRewards = new ArrayList<>();
-        userRewards.add(userReward);
-    }*/
 
     /**
      * This method adds a reward in the user rewards if this reward is not already in this list
-     * @param user the targeted user
+     *
+     * @param user       the targeted user
      * @param userReward the former list of user rewards
      * @return the updated list of the user rewards
      */
     public boolean addIfNotInUserRewards(User user, UserReward userReward) {
+        log.info("Adding reward {} for user {}", userReward.getRewardPoints(), user.getUserName());
         List<UserReward> userRewards = user.getUserRewards();
         List<UserReward> userRewardsCopy = new ArrayList<>(userRewards);
         for (UserReward userReward1 : userRewardsCopy) {
             if (userReward1.attraction.attractionName.equals(userReward.attraction.attractionName)) {
+                log.info("Reward {} already in user rewards, this reward is not added", userReward.getRewardPoints());
                 return false;
             }
         }
+        log.info("Reward {} successfully added in user rewards", userReward.getRewardPoints());
         userRewards.add(userReward);
         return true;
     }
 
-
-    public boolean isWithinAttractionProximity(Attraction attraction, Location location) {
-        return getDistance(attraction, location) > attractionProximityRange ? false : true;
-    }
-
-    /**
-     * This method determines if a visitedLocation is near to an attraction
-     * according to the proximityBuffer value
-     * @param visitedLocation the visitedLocation to evaluate
-     * @param attraction the attraction which is used as reference for this evaluation of distance
-     * @return a boolean which indicates if this visitedLocation is near enough from the attraction
-     */
-    private boolean nearAttraction(VisitedLocation visitedLocation, Attraction attraction) {
-        return getDistance(attraction, visitedLocation.location) > proximityBuffer ? false : true;
-    }
-
-    /**
-     * This method calculates the user's reward points for an attraction
-     * @param attraction the UUID of the targeted attraction
-     * @param user the UUID of the user
-     * @return the integer value of the reward points for this tuple (attraction, user)
-     */
-    private int getRewardPoints(Attraction attraction, User user) {
-        return rewardCentralProxy.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
-    }
-
     /**
      * This method calculates the distance between two locations
+     *
      * @param loc1 the first location
      * @param loc2 the second location
      * @return the distance between the two locations
@@ -179,5 +150,29 @@ public class RewardsService {
         double statuteMiles = STATUTE_MILES_PER_NAUTICAL_MILE * nauticalMiles;
         return statuteMiles;
     }
+
+    /**
+     * This method determines if a visitedLocation is near to an attraction
+     * according to the proximityBuffer value
+     *
+     * @param visitedLocation the visitedLocation to evaluate
+     * @param attraction      the attraction which is used as reference for this evaluation of distance
+     * @return a boolean which indicates if this visitedLocation is near enough from the attraction
+     */
+    private boolean nearAttraction(VisitedLocation visitedLocation, Attraction attraction) {
+        return getDistance(attraction, visitedLocation.location) > proximityBuffer ? false : true;
+    }
+
+    /**
+     * This method calculates the user's reward points for an attraction
+     *
+     * @param attraction the UUID of the targeted attraction
+     * @param user       the UUID of the user
+     * @return the integer value of the reward points for this tuple (attraction, user)
+     */
+    private int getRewardPoints(Attraction attraction, User user) {
+        return rewardCentralProxy.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
+    }
+
 
 }

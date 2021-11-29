@@ -12,7 +12,7 @@ import java.util.UUID;
  * This interface is used as proxy for Feign Client Discovery
  * which allows to use the TripPricer microservice endpoints
  */
-@FeignClient(name = "TripPricer", url = "localhost:9001")
+@FeignClient(name = "TripPricer", url = "172.22.0.4:9001")
 public interface TripPricerProxy {
 
     @GetMapping("/getPrice")
