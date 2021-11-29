@@ -12,8 +12,8 @@ import tourGuide.model.VisitedLocation;
 import tourGuide.proxies.GpsUtilProxy;
 import tourGuide.proxies.RewardCentralProxy;
 import tourGuide.proxies.TripPricerProxy;
-import tourGuide.service.RewardsService;
-import tourGuide.service.TourGuideService;
+import tourGuide.service.IRewardsService;
+import tourGuide.service.ITourGuideService;
 import tourGuide.user.User;
 import tourGuide.user.UserPreferences;
 
@@ -25,13 +25,13 @@ import java.util.List;
 public class TourGuideController {
 
     @Autowired
-    TourGuideService tourGuideService;
+    ITourGuideService tourGuideService;
+
+    @Autowired
+    IRewardsService rewardsService;
 
     @Autowired
     private GpsUtilProxy gpsUtilProxy;
-
-    @Autowired
-    RewardsService rewardsService;
 
     @Autowired
     RewardCentralProxy rewardCentralProxy;
@@ -41,6 +41,7 @@ public class TourGuideController {
 
     /**
      * This endpoint returns TourGuide welcome information
+     *
      * @return
      */
     @RequestMapping("/")
@@ -50,6 +51,7 @@ public class TourGuideController {
 
     /**
      * This endpoint returns the location for a user targeted by username
+     *
      * @param userName the username of the targeted user
      * @return the current location of the targeted user
      */
@@ -62,6 +64,7 @@ public class TourGuideController {
 
     /**
      * This endpoint gets the closest five tourist attractions to the user no matter how far away they are
+     *
      * @param userName the username of the targeted user
      * @return the list of the closest five attractions to the user
      */
@@ -75,6 +78,7 @@ public class TourGuideController {
 
     /**
      * This endpoint returns the rewards of the user targeted by username
+     *
      * @param userName the username of the targeted user
      * @return the rewards for this user
      */
@@ -85,6 +89,7 @@ public class TourGuideController {
 
     /**
      * This endpoint returns the current locations for all users
+     *
      * @return the list of the current locations for all users
      */
     @RequestMapping("/getAllCurrentLocations")
@@ -95,19 +100,21 @@ public class TourGuideController {
 
     /**
      * This endpoint returns a list of trip deals for the targeted user
+     *
      * @param userName the username of the targeted user
      * @return the list of trip deals for this user
      */
     @RequestMapping("/getTripDeals")
-    public List<Provider>  getTripDeals(@RequestParam String userName) {
+    public List<Provider> getTripDeals(@RequestParam String userName) {
         List<Provider> providers = tourGuideService.getTripDeals(getUser(userName));
         return providers;
     }
 
     /**
      * This endpoint allows setting new user preferences to the targeted user
+     *
      * @param userPreferences the user preferences to set to this user
-     * @param userName the username of the targeted user
+     * @param userName        the username of the targeted user
      * @return the user with updated user preferences
      */
     @RequestMapping("/setUserPreferences/{userName}")
@@ -118,6 +125,7 @@ public class TourGuideController {
 
     /**
      * This method gets a targeted user from username
+     *
      * @param userName the username of the targeted user
      * @return the user targeted by username
      */

@@ -103,9 +103,9 @@ public class TourGuideUnitTest {
     public void addUserTest() {
         InternalTestHelper.setInternalUserNumber(100);
         List<User> users = tourGuideService.getAllUsers();
-        // assertEquals(users.size()+1, 101);
         UUID uuid = UUID.randomUUID();
         User user = new User(uuid, "0", "0", "0");
+        InternalTestHelper.generateUserLocationHistory(user);
         tourGuideService.addUser(user);
         assertEquals(users.size() + 1, tourGuideService.getAllUsers().size());
     }
@@ -126,9 +126,8 @@ public class TourGuideUnitTest {
         Location location = new Location(1D, 1D);
         VisitedLocation visitedLocation = new VisitedLocation(uuid, location, new Date());
         when(gpsUtilProxy.calculateUserLocation(any())).thenReturn(visitedLocation);
-//        when(gpsUtilProxy.getAttractions()).thenReturn(new ArrayList<>());
         doNothing().when(rewardsService).calculateRewards(any());
-        tourGuideService.calculateUserLocation(user);
+        tourGuideService.trackUserLocation(user);
     }
 
     @Test

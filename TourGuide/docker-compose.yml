@@ -7,7 +7,8 @@ services:
     ports:
       - "9003:9003"
     networks:
-      - docker-net
+      docker-net:
+        ipv4_address: ${IP_GPSUTIL}
 
   rewardcentral:
     container_name: rewardcentral
@@ -15,7 +16,8 @@ services:
     ports:
       - "9002:9002"
     networks:
-      - docker-net
+      docker-net:
+        ipv4_address: ${IP_REWARDCENTRAL}
 
   trippricer:
     container_name: trippricer
@@ -23,7 +25,8 @@ services:
     ports:
       - "9001:9001"
     networks:
-      - docker-net
+      docker-net:
+        ipv4_address: ${IP_TRIPPRICER}
 
   tourguide:
     container_name: tourguide
@@ -31,11 +34,10 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - docker-net
-    command: npm run test
+      docker-net:
+        ipv4_address: ${IP_TOURGUIDE}
 
 networks:
   docker-net:
-    driver: bridge
 
 

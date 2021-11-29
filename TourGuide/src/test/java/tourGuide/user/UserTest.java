@@ -31,7 +31,7 @@ public class UserTest {
 
     @BeforeEach
     public void setBefore() {
-       users = tourGuideService.getAllUsers();
+        users = tourGuideService.getAllUsers();
     }
 
     @BeforeEach
@@ -52,10 +52,10 @@ public class UserTest {
         user.setTripDeals(new ArrayList<>());
         user.setUserPreferences(new UserPreferences());
         user.setLatestLocationTimestamp(new Date());
-        Location location = new Location(1D,1D);
+        Location location = new Location(1D, 1D);
         VisitedLocation visitedLocation = new VisitedLocation(user.getUserId(), location, new Date());
         Attraction attraction = new Attraction("attraction", "city",
-                "state", 1D,1D);
+                "state", 1D, 1D);
         rewardsService.addIfNotInUserRewards(user, new UserReward(visitedLocation, attraction, 1));
         user.addToVisitedLocations(visitedLocation);
         assertNotNull(user.getUserId());
@@ -69,7 +69,7 @@ public class UserTest {
         assertNotNull(user.getVisitedLocations());
         assertNotNull(user.getLastVisitedLocation());
         user.clearVisitedLocations();
-        assert(user.getVisitedLocations().isEmpty());
+        assert (user.getVisitedLocations().isEmpty());
 
 
     }

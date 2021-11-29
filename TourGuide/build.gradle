@@ -17,7 +17,7 @@ apply plugin: "jacoco"
 
 bootJar {
     baseName = 'tourGuide'
-    version =  '1.0.0'
+    version = '1.0.0'
 }
 
 repositories {
@@ -31,7 +31,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 configurations {
-    all*.exclude module : 'spring-boot-starter-logging'
+    all*.exclude module: 'spring-boot-starter-logging'
 }
 
 dependencies {
@@ -40,7 +40,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-log4j2')
     compile("org.springframework.boot:spring-boot-starter-actuator")
     compile group: 'org.javamoney', name: 'moneta', version: '1.3'
-	compile group: 'com.jsoniter', name: 'jsoniter', version: '0.9.23'
+    compile group: 'com.jsoniter', name: 'jsoniter', version: '0.9.23'
     compile 'org.springframework.cloud:spring-cloud-starter-openfeign:2.0.0.RELEASE'
     compile 'org.apache.commons:commons-lang3:3.12.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
@@ -54,6 +54,10 @@ test {
     testLogging {
         events "passed", "skipped", "failed"
     }
+}
+
+build {
+
 }
 
 jacoco {
@@ -71,3 +75,16 @@ jacocoTestReport {
 test.finalizedBy jacocoTestReport
 check.dependsOn jacocoTestCoverageVerification
 
+check.dependsOn jacocoTestCoverageVerification
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.5
+            }
+        }
+    }
+}

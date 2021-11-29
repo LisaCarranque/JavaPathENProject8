@@ -12,7 +12,7 @@ import java.util.List;
  * This interface is used as proxy for Feign Client Discovery
  * which allows to use the GpsUtil microservice endpoints
  */
-@FeignClient(name = "GpsUtil", url = "localhost:9003")
+@FeignClient(name = "GpsUtil", url = "172.22.0.2:9003")
 public interface GpsUtilProxy {
 
     @GetMapping("/getUserLocation")

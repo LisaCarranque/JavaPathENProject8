@@ -5,11 +5,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import tourGuide.TourGuideModule;
 import tourGuide.helper.InternalTestHelper;
 import tourGuide.model.Attraction;
 import tourGuide.model.VisitedLocation;
@@ -29,18 +27,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes={TourGuideModule.class})
+@SpringBootTest
 @EnableAutoConfiguration
 @ComponentScan("tourGuide")
-@EnableFeignClients(clients = {GpsUtilProxy.class, RewardCentralProxy.class, TripPricerProxy.class})
 @Log4j2
 public class TestRewardServiceIT {
 
-    @Autowired
-    TourGuideService tourGuideService;
-
-    @Autowired
-    RewardsService rewardsService;
 
     @Autowired
     private GpsUtilProxy gpsUtilProxy;
@@ -51,6 +43,13 @@ public class TestRewardServiceIT {
     @Autowired
     private TripPricerProxy tripPricerProxy;
 
+
+    @Autowired
+    RewardsService rewardsService;
+
+    @Autowired
+    TourGuideService tourGuideService;
+
     @Test
     public void userGetRewards() {
         rewardsService.setProximityBuffer(10);
@@ -59,17 +58,10 @@ public class TestRewardServiceIT {
         User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
         Attraction attraction = gpsUtilProxy.getAttractions().get(0);
         user.addToVisitedLocations(new VisitedLocation(user.getUserId(), attraction, new Date()));
-        tourGuideService.calculateUserLocation(user);
+        tourGuideService.trackUserLocation(user);
         List<UserReward> userRewards = user.getUserRewards();
-        tourGuideService.gps.stopTracking();
+        tourGuideService.tracker.stopTracking();
         assertTrue(userRewards.size() == 1);
-    }
-
-    @Test
-    public void isWithinAttractionProximity() {
-        RewardsService rewardsService = new RewardsService(gpsUtilProxy, rewardCentralProxy);
-        Attraction attraction = gpsUtilProxy.getAttractions().get(0);
-        assertTrue(rewardsService.isWithinAttractionProximity(attraction, attraction));
     }
 
     @Test
@@ -80,7 +72,7 @@ public class TestRewardServiceIT {
 
         rewardsService.calculateRewards(tourGuideService.getAllUsers().get(0));
         List<UserReward> userRewards = tourGuideService.getUserRewards(tourGuideService.getAllUsers().get(0));
-        tourGuideService.gps.stopTracking();
+        tourGuideService.tracker.stopTracking();
 
         assertEquals(gpsUtilProxy.getAttractions().size(), userRewards.size());
     }

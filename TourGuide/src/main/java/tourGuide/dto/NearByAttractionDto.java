@@ -19,6 +19,7 @@ public class NearByAttractionDto implements Comparable<NearByAttractionDto> {
 
     /**
      * This method is used to determine the closest attractions to the user location
+     *
      * @param other
      * @return
      */

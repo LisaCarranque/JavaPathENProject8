@@ -8,6 +8,7 @@ public class GpsUtilModule {
 
     /**
      * This method produces a bean GpsUtil to be managed by the Spring container
+     *
      * @return the bean GpsUtil
      */
     @Bean
